@@ -32,11 +32,9 @@ export function useInvoices(
     staleTime: 15_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (env.VITE_DEFAULT_ORGANIZATION_ID !== undefined) {
-        params.set(
-          'organization_id',
-          String(env.VITE_DEFAULT_ORGANIZATION_ID),
-        )
+      const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
+      if (orgId) {
+        params.set('organization_id', orgId)
       }
       for (const [k, v] of Object.entries(filters)) {
         if (v !== undefined && v !== null && v !== '') {

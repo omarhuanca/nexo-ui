@@ -16,11 +16,9 @@ export function useInvoice(
     staleTime: 60_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (env.VITE_DEFAULT_ORGANIZATION_ID !== undefined) {
-        params.set(
-          'organization_id',
-          String(env.VITE_DEFAULT_ORGANIZATION_ID),
-        )
+      const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
+      if (orgId) {
+        params.set('organization_id', orgId)
       }
       const qs = params.toString()
       const { data } = await api.get<SingleResponse<Sale>>(

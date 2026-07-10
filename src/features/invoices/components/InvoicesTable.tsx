@@ -159,8 +159,14 @@ function InvoicesTableComponent({
       queryClient.prefetchQuery({
         queryKey: invoicesKeys.detail(id),
         queryFn: async () => {
+          const params = new URLSearchParams()
+          const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
+          if (orgId) {
+            params.set('organization_id', orgId)
+          }
+          const qs = params.toString()
           const { data } = await api.get<SingleResponse<Sale>>(
-            `/integrations/taxcore/invoices/${id}?organization_id=${env.VITE_DEFAULT_ORGANIZATION_ID}`,
+            `/integrations/taxcore/invoices/${id}${qs ? `?${qs}` : ''}`,
           )
           return data
         },

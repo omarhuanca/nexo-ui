@@ -1,13 +1,29 @@
 import { memo } from 'react'
+import { Menu } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { NexoLogo } from './NexoLogo'
+import { useSidebar } from '@/hooks/useSidebar'
 
 function NavbarComponent() {
+  const { openMobile } = useSidebar()
+
   return (
     <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-slate-200 bg-white">
-      <div className="flex h-full items-center justify-between px-6">
-        <NexoLogo />
+      <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openMobile}
+            className="lg:hidden"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <NexoLogo />
+        </div>
         <div className="flex items-center gap-3">
-          <div className="flex flex-col text-right leading-tight">
+          <div className="hidden flex-col text-right leading-tight sm:flex">
             <span className="text-sm font-medium text-slate-900">
               Administrator
             </span>
