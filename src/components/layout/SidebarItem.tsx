@@ -6,11 +6,63 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useSidebar } from '@/hooks/useSidebar'
 
-function SidebarItemComponent() {
+interface SidebarItemProps {
+  label: string
+  to: string
+  defaultOpen?: boolean
+}
+
+function SidebarItemComponent({ label, to, defaultOpen = true }: SidebarItemProps) {
+  const { isCollapsed } = useSidebar()
+
+  const item = (
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+          isActive
+            ? 'bg-blue-50 font-medium text-blue-700'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+          isCollapsed && 'lg:justify-center lg:px-2',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <FileText
+            className={cn(
+              'h-4 w-4 shrink-0',
+              isActive ? 'text-blue-700' : 'text-slate-400',
+            )}
+            aria-hidden="true"
+          />
+          <span className={cn(isCollapsed && 'lg:hidden')}>{label}</span>
+        </>
+      )}
+    </NavLink>
+  )
+
+  if (isCollapsed) {
+    return (
+      <ul className="space-y-0.5">
+        <li>
+          <Tooltip>
+            <TooltipTrigger asChild>{item}</TooltipTrigger>
+            <TooltipContent side="right">{label}</TooltipContent>
+          </Tooltip>
+        </li>
+      </ul>
+    )
+  }
+
   return (
-    <Collapsible defaultOpen className="group/collapsible">
+    <Collapsible defaultOpen={defaultOpen} className="group/collapsible">
       <CollapsibleTrigger
         className={cn(
           'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors',
@@ -36,32 +88,7 @@ function SidebarItemComponent() {
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden">
         <ul className="mt-1 space-y-0.5 pl-2">
-          <li>
-            <NavLink
-              to="/invoices"
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
-                  isActive
-                    ? 'bg-blue-50 font-medium text-blue-700'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <FileText
-                    className={cn(
-                      'h-4 w-4',
-                      isActive ? 'text-blue-700' : 'text-slate-400',
-                    )}
-                    aria-hidden="true"
-                  />
-                  <span>Invoices</span>
-                </>
-              )}
-            </NavLink>
-          </li>
+          <li>{item}</li>
         </ul>
       </CollapsibleContent>
     </Collapsible>
