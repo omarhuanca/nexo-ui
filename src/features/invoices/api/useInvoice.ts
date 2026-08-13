@@ -3,22 +3,25 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { env } from '@/lib/env'
+import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from './invoicesKeys'
 import type { Sale, SingleResponse } from '../types/sale'
 
 export function useInvoice(
   id: number | null,
 ): UseQueryResult<SingleResponse<Sale>, Error> {
+  const { organizationId } = useActiveOrganization()
+
   return useQuery({
-    queryKey: id ? invoicesKeys.detail(id) : ['invoices', 'detail', 'disabled'],
-    enabled: id !== null,
+    queryKey: id
+      ? invoicesKeys.detail(id, organizationId)
+      : ['invoices', 'detail', 'disabled'],
+    enabled: id !== null && organizationId !== null,
     staleTime: 60_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
-      if (orgId) {
-        params.set('organization_id', orgId)
+      if (organizationId !== null) {
+        params.set('organization_id', String(organizationId))
       }
       const qs = params.toString()
       const { data } = await api.get<SingleResponse<Sale>>(
