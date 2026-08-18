@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from './StatusBadge'
 import { formatCurrency, formatDateTime, truncate } from '../utils/formatters'
 import { api } from '@/lib/api'
-import { env } from '@/lib/env'
+import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from '../api/invoicesKeys'
 import type { SingleResponse, Sale } from '../types/sale'
 import { cn } from '@/lib/utils'
@@ -153,27 +153,25 @@ function InvoicesTableComponent({
 }: InvoicesTableProps) {
   const queryClient = useQueryClient()
   const hoverTimerRef = useRef<number | null>(null)
+  const { organizationId } = useActiveOrganization()
 
   const handlePrefetch = useCallback(
     (id: number) => {
+      if (organizationId === null) return
       queryClient.prefetchQuery({
-        queryKey: invoicesKeys.detail(id),
+        queryKey: invoicesKeys.detail(id, organizationId),
         queryFn: async () => {
           const params = new URLSearchParams()
-          const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
-          if (orgId) {
-            params.set('organization_id', orgId)
-          }
-          const qs = params.toString()
+          params.set('organization_id', String(organizationId))
           const { data } = await api.get<SingleResponse<Sale>>(
-            `/integrations/taxcore/invoices/${id}${qs ? `?${qs}` : ''}`,
+            `/integrations/taxcore/invoices/${id}?${params.toString()}`,
           )
           return data
         },
         staleTime: 60_000,
       })
     },
-    [queryClient],
+    [queryClient, organizationId],
   )
 
   const handleMouseEnter = useCallback(

@@ -6,3 +6,16 @@ export interface ApiPagination {
   from: number | null
   to: number | null
 }
+
+export interface PaginatedResponse<T> {
+  success: boolean
+  message: string
+  data: T[]
+  pagination: ApiPagination
+}
+
+export interface SingleResponse<T> {
+  success: boolean
+  message: string
+  data: T
+}

@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { NexoLogo } from './NexoLogo'
 import { useSidebar } from '@/hooks/useSidebar'
+import { OrganizationSelector } from '@/features/organizations/components/OrganizationSelector'
 
 function NavbarComponent() {
   const { openMobile } = useSidebar()
@@ -23,6 +24,7 @@ function NavbarComponent() {
           <NexoLogo />
         </div>
         <div className="flex items-center gap-3">
+          <OrganizationSelector />
           <div className="hidden flex-col text-right leading-tight sm:flex">
             <span className="text-sm font-medium text-slate-900">
               Administrator

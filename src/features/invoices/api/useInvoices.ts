@@ -4,7 +4,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { env } from '@/lib/env'
+import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from './invoicesKeys'
 import type {
   PaginatedResponse,
@@ -26,15 +26,17 @@ export interface InvoicesFilters {
 export function useInvoices(
   filters: InvoicesFilters,
 ): UseQueryResult<PaginatedResponse<Sale>, Error> {
+  const { organizationId } = useActiveOrganization()
+
   return useQuery({
-    queryKey: invoicesKeys.list(filters),
+    queryKey: invoicesKeys.list(filters, organizationId),
+    enabled: organizationId !== null,
     placeholderData: keepPreviousData,
     staleTime: 15_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      const orgId = env.VITE_DEFAULT_ORGANIZATION_ID
-      if (orgId) {
-        params.set('organization_id', orgId)
+      if (organizationId !== null) {
+        params.set('organization_id', String(organizationId))
       }
       for (const [k, v] of Object.entries(filters)) {
         if (v !== undefined && v !== null && v !== '') {
