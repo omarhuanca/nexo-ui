@@ -28,7 +28,7 @@ export function InvoicesPage() {
       dateFrom: filters.dateFrom ?? undefined,
       dateTo: filters.dateTo ?? undefined,
       page: filters.page ?? 1,
-      pageSize: filters.pageSize ?? 50,
+      pageSize: filters.pageSize ?? 10,
     }),
     [filters],
   )
