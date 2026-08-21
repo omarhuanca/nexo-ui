@@ -15,7 +15,7 @@ export const invoiceFilterParsers = {
   dateFrom: parseAsString,
   dateTo: parseAsString,
   page: parseAsInteger.withDefault(1),
-  pageSize: parseAsInteger.withDefault(50),
+  pageSize: parseAsInteger.withDefault(10),
 }
 
 export type InvoiceFilterValues = Values<typeof invoiceFilterParsers>
