@@ -13,10 +13,11 @@ import { useSidebar } from '@/hooks/useSidebar'
 interface SidebarItemProps {
   label: string
   to: string
+  groupLabel?: string
   defaultOpen?: boolean
 }
 
-function SidebarItemComponent({ label, to, defaultOpen = true }: SidebarItemProps) {
+function SidebarItemComponent({ label, to, groupLabel = 'Sales', defaultOpen = true }: SidebarItemProps) {
   const { isCollapsed } = useSidebar()
 
   const item = (
@@ -70,7 +71,7 @@ function SidebarItemComponent({ label, to, defaultOpen = true }: SidebarItemProp
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         )}
       >
-        <span>Sales</span>
+        <span>{groupLabel}</span>
         <svg
           className="h-4 w-4 text-slate-400 transition-transform group-data-[state=open]/collapsible:rotate-90"
           viewBox="0 0 16 16"
