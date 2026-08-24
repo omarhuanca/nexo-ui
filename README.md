@@ -311,7 +311,7 @@ dist/
 
 La documentación del proyecto debe cubrir:
 
-- Arquitectura general.
+- Arquitectura general del proyecto.
 - Organización por features.
 - Configuración de variables de entorno.
 - Consumo de APIs.
