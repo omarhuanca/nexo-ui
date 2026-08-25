@@ -11,11 +11,17 @@ import { InvoiceDetailDialog } from '../components/InvoiceDetailDialog'
 import { useInvoices } from '../api/useInvoices'
 import { useInvoiceFilters } from '../hooks/useInvoiceFilters'
 import { invoicesKeys } from '../api/invoicesKeys'
+import {
+  ORGANIZATION_NONE,
+  useActiveOrganization,
+} from '@/features/organizations/hooks/useActiveOrganization'
+import { OrganizationRequiredNotice } from '@/features/organizations/components/OrganizationRequiredNotice'
 import type { Sale } from '../types/sale'
 
 export function InvoicesPage() {
   const queryClient = useQueryClient()
   const [filters, setFilters] = useInvoiceFilters()
+  const { organizationId } = useActiveOrganization()
   const [detailId, setDetailId] = useState<number | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -71,6 +77,20 @@ export function InvoicesPage() {
     },
     [setFilters],
   )
+
+  if (organizationId === ORGANIZATION_NONE) {
+    return (
+      <div className="space-y-6">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
+          <p className="text-sm text-slate-500">
+            Browse and inspect fiscalized invoices synced from TaxCore and Xero.
+          </p>
+        </header>
+        <OrganizationRequiredNotice />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

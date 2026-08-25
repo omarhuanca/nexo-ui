@@ -7,7 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useActiveOrganization } from '../hooks/useActiveOrganization'
+import {
+  ORGANIZATION_NONE,
+  useActiveOrganization,
+} from '../hooks/useActiveOrganization'
 import { useOrganizations } from '../api/useOrganizations'
 
 function OrganizationSelectorComponent() {
@@ -16,6 +19,7 @@ function OrganizationSelectorComponent() {
 
   const orgs = data?.data ?? []
   const loading = isLoading || isError || orgs.length === 0
+  const value = organizationId === ORGANIZATION_NONE ? undefined : String(organizationId)
 
   return (
     <div className="flex items-center gap-2">
@@ -24,7 +28,7 @@ function OrganizationSelectorComponent() {
         aria-hidden="true"
       />
       <Select
-        value={organizationId !== null ? String(organizationId) : undefined}
+        value={value}
         onValueChange={(v) => setOrganizationId(Number(v))}
         disabled={loading}
       >
