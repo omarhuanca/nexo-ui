@@ -4,7 +4,10 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
+import {
+  ORGANIZATION_NONE,
+  useActiveOrganization,
+} from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from './invoicesKeys'
 import type {
   PaginatedResponse,
@@ -30,12 +33,12 @@ export function useInvoices(
 
   return useQuery({
     queryKey: invoicesKeys.list(filters, organizationId),
-    enabled: organizationId !== null,
+    enabled: organizationId !== ORGANIZATION_NONE,
     placeholderData: keepPreviousData,
     staleTime: 15_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (organizationId !== null) {
+      if (organizationId !== ORGANIZATION_NONE) {
         params.set('organization_id', String(organizationId))
       }
       for (const [k, v] of Object.entries(filters)) {

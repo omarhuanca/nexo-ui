@@ -3,7 +3,10 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
+import {
+  ORGANIZATION_NONE,
+  useActiveOrganization,
+} from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from './invoicesKeys'
 import type { Sale, SingleResponse } from '../types/sale'
 
@@ -16,11 +19,11 @@ export function useInvoice(
     queryKey: id
       ? invoicesKeys.detail(id, organizationId)
       : ['invoices', 'detail', 'disabled'],
-    enabled: id !== null && organizationId !== null,
+    enabled: id !== null && organizationId !== ORGANIZATION_NONE,
     staleTime: 60_000,
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (organizationId !== null) {
+      if (organizationId !== ORGANIZATION_NONE) {
         params.set('organization_id', String(organizationId))
       }
       const qs = params.toString()

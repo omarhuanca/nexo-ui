@@ -1,24 +1,26 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { parseAsInteger, useQueryState } from 'nuqs'
 
+export const ORGANIZATION_NONE = 0
+
 const STORAGE_KEY = 'nexo:active-organization-id'
 
-function readStoredOrg(): number | null {
-  if (typeof window === 'undefined') return null
+function readStoredOrg(): number {
+  if (typeof window === 'undefined') return ORGANIZATION_NONE
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return ORGANIZATION_NONE
     const n = Number(raw)
-    return Number.isInteger(n) && n > 0 ? n : null
+    return Number.isInteger(n) && n > 0 ? n : ORGANIZATION_NONE
   } catch {
-    return null
+    return ORGANIZATION_NONE
   }
 }
 
-function writeStoredOrg(id: number | null): void {
+function writeStoredOrg(id: number): void {
   if (typeof window === 'undefined') return
   try {
-    if (id === null) {
+    if (id === ORGANIZATION_NONE) {
       window.localStorage.removeItem(STORAGE_KEY)
     } else {
       window.localStorage.setItem(STORAGE_KEY, String(id))
@@ -29,29 +31,30 @@ function writeStoredOrg(id: number | null): void {
 }
 
 export function useActiveOrganization(): {
-  organizationId: number | null
+  organizationId: number
   setOrganizationId: (id: number) => void
 } {
-  const [orgId, setOrgId] = useQueryState('org', parseAsInteger)
+  const [rawOrgId, setOrgId] = useQueryState('org', parseAsInteger)
+  const organizationId = rawOrgId ?? ORGANIZATION_NONE
   const seededRef = useRef(false)
 
   useEffect(() => {
     if (seededRef.current) return
     seededRef.current = true
-    if (orgId !== null) {
-      writeStoredOrg(orgId)
+    if (organizationId !== ORGANIZATION_NONE) {
+      writeStoredOrg(organizationId)
       return
     }
     const stored = readStoredOrg()
-    if (stored !== null) {
+    if (stored !== ORGANIZATION_NONE) {
       setOrgId(stored)
     }
-  }, [orgId, setOrgId])
+  }, [organizationId, setOrgId])
 
   useEffect(() => {
     if (!seededRef.current) return
-    writeStoredOrg(orgId)
-  }, [orgId])
+    writeStoredOrg(organizationId)
+  }, [organizationId])
 
   const setOrganizationId = useCallback(
     (id: number) => {
@@ -60,5 +63,5 @@ export function useActiveOrganization(): {
     [setOrgId],
   )
 
-  return { organizationId: orgId, setOrganizationId }
+  return { organizationId, setOrganizationId }
 }

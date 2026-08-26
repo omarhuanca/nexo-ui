@@ -21,7 +21,10 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from './StatusBadge'
 import { formatCurrency, formatDateTime, truncate } from '../utils/formatters'
 import { api } from '@/lib/api'
-import { useActiveOrganization } from '@/features/organizations/hooks/useActiveOrganization'
+import {
+  ORGANIZATION_NONE,
+  useActiveOrganization,
+} from '@/features/organizations/hooks/useActiveOrganization'
 import { invoicesKeys } from '../api/invoicesKeys'
 import type { SingleResponse, Sale } from '../types/sale'
 import { cn } from '@/lib/utils'
@@ -157,7 +160,7 @@ function InvoicesTableComponent({
 
   const handlePrefetch = useCallback(
     (id: number) => {
-      if (organizationId === null) return
+      if (organizationId === ORGANIZATION_NONE) return
       queryClient.prefetchQuery({
         queryKey: invoicesKeys.detail(id, organizationId),
         queryFn: async () => {
