@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef } from 'react'
+import { memo, useCallback, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   flexRender,
@@ -8,6 +8,7 @@ import {
   type Row,
 } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -28,6 +29,7 @@ import {
 import { invoicesKeys } from '../api/invoicesKeys'
 import type { SingleResponse, Sale } from '../types/sale'
 import { cn } from '@/lib/utils'
+import { INVOICE_TYPES } from '../utils/constants'
 
 const PREFETCH_DELAY_MS = 100
 
@@ -38,7 +40,6 @@ interface InvoicesTableProps {
   isFetching: boolean
   errorMessage?: string
   hasActiveFilters: boolean
-  onRowClick: (sale: Sale) => void
   onClearFilters: () => void
 }
 
@@ -52,98 +53,6 @@ function LoadingSkeleton() {
   )
 }
 
-const columns: ColumnDef<Sale>[] = [
-  {
-    id: 'id',
-    header: 'ID',
-    accessorKey: 'id',
-    cell: ({ getValue }) => (
-      <span className="font-mono text-xs text-slate-500">
-        #{getValue<number>()}
-      </span>
-    ),
-  },
-  {
-    id: 'status',
-    header: 'Status',
-    accessorKey: 'status',
-    cell: ({ getValue }) => <StatusBadge status={getValue<Sale['status']>()} />,
-  },
-  {
-    id: 'fiscal_number',
-    header: 'Fiscal #',
-    accessorKey: 'fiscal_number',
-    cell: ({ getValue }) => {
-      const value = getValue<string | null>()
-      return (
-        <span className="font-mono text-xs text-slate-700">
-          {value ? truncate(value, 28) : '—'}
-        </span>
-      )
-    },
-  },
-  {
-    id: 'buyer',
-    header: 'Buyer',
-    accessorFn: (row) => row.payload?.buyer?.name ?? '',
-    cell: ({ getValue }) => (
-      <span className="text-sm text-slate-900">
-        {(getValue<string>() || '—') as string}
-      </span>
-    ),
-  },
-  {
-    id: 'total',
-    header: () => <div className="text-right">Total</div>,
-    accessorKey: 'total_amount',
-    cell: ({ getValue }) => (
-      <div className="text-right font-medium tabular-nums">
-        {formatCurrency(getValue<number | null>())}
-      </div>
-    ),
-  },
-  {
-    id: 'sdc_date_time',
-    header: 'SDC date',
-    accessorKey: 'sdc_date_time',
-    cell: ({ getValue }) => (
-      <span className="text-xs text-slate-600">
-        {formatDateTime(getValue<string | null>())}
-      </span>
-    ),
-  },
-  {
-    id: 'created_at',
-    header: 'Created',
-    accessorKey: 'created_at',
-    cell: ({ getValue }) => (
-      <span className="text-xs text-slate-600">
-        {formatDateTime(getValue<string>())}
-      </span>
-    ),
-  },
-  {
-    id: 'actions',
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => (
-      <div className="text-right">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => {
-            e.stopPropagation()
-          }}
-          aria-label={`View invoice ${row.original.id}`}
-        >
-          <Eye className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </div>
-    ),
-  },
-]
-
 function InvoicesTableComponent({
   sales,
   isLoading,
@@ -151,12 +60,133 @@ function InvoicesTableComponent({
   isFetching,
   errorMessage,
   hasActiveFilters,
-  onRowClick,
   onClearFilters,
 }: InvoicesTableProps) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const hoverTimerRef = useRef<number | null>(null)
   const { organizationId } = useActiveOrganization()
+
+  const goToInvoiceDetail = useCallback(
+    (id: number) => {
+      const search = organizationId !== ORGANIZATION_NONE ? `?org=${organizationId}` : ''
+      navigate(`/invoices/${id}${search}`)
+    },
+    [navigate, organizationId],
+  )
+
+  const columns = useMemo<ColumnDef<Sale>[]>(
+    () => [
+      {
+        id: 'id',
+        header: 'ID',
+        accessorKey: 'id',
+        cell: ({ getValue }) => (
+          <span className="font-mono text-xs text-slate-500">
+            #{getValue<number>()}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        accessorKey: 'status',
+        cell: ({ getValue }) => <StatusBadge status={getValue<Sale['status']>()} />,
+      },
+      {
+        id: 'invoice_type',
+        header: 'Invoice type',
+        accessorFn: (row) => row.payload?.invoiceType ?? null,
+        cell: ({ getValue }) => {
+          const invoiceType = getValue<number | null>()
+
+          return (
+            <span className="text-sm text-slate-700">
+              {invoiceType === null
+                ? '—'
+                : INVOICE_TYPES.get(invoiceType as 0 | 1 | 2 | 3 | 4) ??
+                  `Type ${invoiceType}`}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'fiscal_number',
+        header: 'Fiscal #',
+        accessorKey: 'fiscal_number',
+        cell: ({ getValue }) => {
+          const value = getValue<string | null>()
+          return (
+            <span className="font-mono text-xs text-slate-700">
+              {value ? truncate(value, 28) : '—'}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'buyer',
+        header: 'Buyer',
+        accessorFn: (row) => row.payload?.buyer?.name ?? '',
+        cell: ({ getValue }) => (
+          <span className="text-sm text-slate-900">
+            {(getValue<string>() || '—') as string}
+          </span>
+        ),
+      },
+      {
+        id: 'total',
+        header: () => <div className="text-right">Total</div>,
+        accessorKey: 'total_amount',
+        cell: ({ getValue }) => (
+          <div className="text-right font-medium tabular-nums">
+            {formatCurrency(getValue<number | null>())}
+          </div>
+        ),
+      },
+      {
+        id: 'sdc_date_time',
+        header: 'SDC date',
+        accessorKey: 'sdc_date_time',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-slate-600">
+            {formatDateTime(getValue<string | null>())}
+          </span>
+        ),
+      },
+      {
+        id: 'created_at',
+        header: 'Created',
+        accessorKey: 'created_at',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-slate-600">
+            {formatDateTime(getValue<string>())}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation()
+                goToInvoiceDetail(row.original.id)
+              }}
+              aria-label={`View invoice ${row.original.id}`}
+            >
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [navigate],
+  )
 
   const handlePrefetch = useCallback(
     (id: number) => {
@@ -196,16 +226,6 @@ function InvoicesTableComponent({
       hoverTimerRef.current = null
     }
   }, [])
-
-  const handleRowKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTableRowElement>, row: Row<Sale>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        onRowClick(row.original)
-      }
-    },
-    [onRowClick],
-  )
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -292,14 +312,9 @@ function InvoicesTableComponent({
             {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open invoice ${row.original.id}`}
-                onClick={() => onRowClick(row.original)}
-                onKeyDown={(e) => handleRowKeyDown(e, row)}
                 onMouseEnter={() => handleMouseEnter(row)}
                 onMouseLeave={handleMouseLeave}
-                className={cn('cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring')}
+                className={cn('focus:outline-none focus-visible:ring-2 focus-visible:ring-ring')}
                 style={{ contentVisibility: 'auto', containIntrinsicSize: '0 48px' }}
               >
                 {row.getVisibleCells().map((cell) => (

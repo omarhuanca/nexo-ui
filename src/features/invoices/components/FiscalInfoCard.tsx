@@ -67,7 +67,7 @@ function FiscalInfoCardComponent({ fiscal }: FiscalInfoCardProps) {
       </Card>
 
       <SignatureBlock signature={fiscal.signature} />
-      <JournalBlock journal={fiscal.journal} />
+      <JournalBlock journal={fiscal.journal} verificationQRCode={verificationQRCode} />
 
       <Card>
         <CardHeader>
