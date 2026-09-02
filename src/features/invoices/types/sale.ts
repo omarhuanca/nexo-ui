@@ -30,6 +30,10 @@ export interface SalePayload {
   payment: SalePayment[]
   invoiceType: InvoiceType
   transactionType: TransactionType
+  taxAmount?: number | null
+  taxId?: string | null
+  storeName?: string | null
+  address?: string | null
   cashier?: string | null
   dueDate?: string | null
   referentDocumentNumber?: string | null
