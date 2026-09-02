@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { InvoicesFilters } from '../components/InvoicesFilters'
 import { InvoicesFiltersSheet } from '../components/InvoicesFiltersSheet'
@@ -7,7 +7,6 @@ import {
   InvoicesPagination,
   InvoicesSummary,
 } from '../components/InvoicesPagination'
-import { InvoiceDetailDialog } from '../components/InvoiceDetailDialog'
 import { useInvoices } from '../api/useInvoices'
 import { useInvoiceFilters } from '../hooks/useInvoiceFilters'
 import { invoicesKeys } from '../api/invoicesKeys'
@@ -22,8 +21,6 @@ export function InvoicesPage() {
   const queryClient = useQueryClient()
   const [filters, setFilters] = useInvoiceFilters()
   const { organizationId } = useActiveOrganization()
-  const [detailId, setDetailId] = useState<number | null>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
 
   const apiFilters = useMemo(
     () => ({
@@ -65,11 +62,6 @@ export function InvoicesPage() {
   const handleClearFilters = useCallback(() => {
     setFilters(null)
   }, [setFilters])
-
-  const handleRowClick = useCallback((sale: Sale) => {
-    setDetailId(sale.id)
-    setDetailOpen(true)
-  }, [])
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -127,7 +119,6 @@ export function InvoicesPage() {
         isFetching={isFetching && !isLoading}
         errorMessage={isError ? error?.message : undefined}
         hasActiveFilters={hasActiveFilters || !!filters.status}
-        onRowClick={handleRowClick}
         onClearFilters={handleClearFilters}
       />
 
@@ -137,15 +128,6 @@ export function InvoicesPage() {
           onPageChange={handlePageChange}
         />
       ) : null}
-
-      <InvoiceDetailDialog
-        saleId={detailId}
-        open={detailOpen}
-        onOpenChange={(open) => {
-          setDetailOpen(open)
-          if (!open) setDetailId(null)
-        }}
-      />
     </div>
   )
 }

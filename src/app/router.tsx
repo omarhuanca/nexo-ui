@@ -9,6 +9,12 @@ const InvoicesPage = lazy(() =>
   })),
 )
 
+const InvoiceDetailPage = lazy(() =>
+  import('@/features/invoices/pages/InvoiceDetailPage').then((m) => ({
+    default: m.InvoiceDetailPage,
+  })),
+)
+
 const AuditLogsPage = lazy(() =>
   import('@/features/audit-logs/pages/AuditLogsPage').then(
     (module) => ({
@@ -28,6 +34,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingState />}>
             <InvoicesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'invoices/:invoiceId',
+        element: (
+          <Suspense fallback={<LoadingState />}>
+            <InvoiceDetailPage />
           </Suspense>
         ),
       },
