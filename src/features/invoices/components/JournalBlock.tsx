@@ -58,9 +58,9 @@ function JournalBlockComponent({ journal, verificationQRCode }: JournalBlockProp
             className="rounded bg-slate-50 p-3 font-mono text-xs text-slate-800"
             style={{ maxHeight: '24rem', overflowY: 'auto' }}
           >
-            {before ? <pre className="whitespace-pre-wrap">{before}</pre> : null}
+            {before && <pre className="whitespace-pre-wrap">{before}</pre>}
 
-            {hasEmbeddedQr && verificationQRCode ? (
+            {hasEmbeddedQr && verificationQRCode && (
               <div className="my-2 w-full">
                 <img
                   src={`data:image/gif;base64,${verificationQRCode}`}
@@ -76,9 +76,9 @@ function JournalBlockComponent({ journal, verificationQRCode }: JournalBlockProp
                   }}
                 />
               </div>
-            ) : null}
+            ) }
 
-            {footer ? <pre className="whitespace-pre-wrap">{footer}</pre> : null}
+            {footer && <pre className="whitespace-pre-wrap">{footer}</pre>}
           </div>
           <CopyButton
             value={journal}
