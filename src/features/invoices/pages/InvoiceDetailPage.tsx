@@ -26,6 +26,235 @@ import { useCompleteSale } from '../api/useCompleteSale'
 import { formatDateTime, truncate } from '../utils/formatters'
 import { INVOICE_TYPES } from '../utils/constants'
 import { getInvoiceActions } from '../utils/invoiceActions'
+import type { Sale } from '../types/sale'
+import { printSale } from '../printing/printDocument'
+type PrintMode = 'invoice' | 'slip'
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function buildPrintableHtml(sale: Sale, mode: PrintMode) {
+  const payload = sale.payload
+  const fiscalResult = sale.fiscal_result
+  const items = payload?.items ?? []
+  const invoiceNumber = sale.fiscal_number ?? sale.id
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.totalAmount ?? item.unitPrice * item.quantity),
+    0,
+  )
+  const tax = Number(payload?.taxAmount ?? 0)
+  const vendor = payload?.buyer?.name ?? ''
+  const storeName = payload?.storeName ?? ''
+  const address = payload?.address ?? ''
+  const buyer = payload?.buyer?.name ?? ''
+  const verificationQr = fiscalResult?.verificationQRCode
+  const qrValue = `${invoiceNumber}|${sale.created_at}`
+  const qrImageUrl = verificationQr
+    ? `data:image/gif;base64,${verificationQr}`
+    : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrValue)}`
+
+  const rows = items.length
+    ? items
+        .map(
+          (item) => `
+            <tr>
+              <td>${escapeHtml(item.name)}</td>
+              <td>${Number(item.unitPrice ?? 0).toFixed(2)}</td>
+              <td>${Number(item.quantity ?? 0)}</td>
+              <td>${Number(item.totalAmount ?? Number(item.unitPrice ?? 0) * Number(item.quantity ?? 0)).toFixed(2)}</td>
+            </tr>
+          `,
+        )
+        .join('')
+    : `
+      <tr>
+        <td colspan="4">No items available.</td>
+      </tr>
+    `
+
+  if (mode === 'slip') {
+    const journal = fiscalResult?.journal ?? ''
+    const journalLines = journal ? journal.split(/\r?\n/) : []
+    const journalBefore = verificationQr && journalLines.length > 1 ? journalLines.slice(0, -1).join('\n') : journal
+    const journalFooter = verificationQr && journalLines.length > 1 ? journalLines[journalLines.length - 1] ?? '' : ''
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Slip Print</title>
+          <style>
+            @page { size: A4; margin: 10mm; }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              background: #fff;
+              color: #111;
+              font-family: "Courier New", monospace;
+              display: flex;
+              justify-content: center;
+              align-items: flex-start;
+            }
+            .page {
+              width: 92mm;
+              margin: 0 auto;
+              padding: 8mm 0 0;
+            }
+            .header-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 11px;
+              line-height: 1.4;
+            }
+            .journal-flow {
+              width: 100%;
+              font-size: 10px;
+              line-height: 1.35;
+              margin: 0 auto;
+            }
+            .journal-flow pre {
+              margin: 0;
+              white-space: pre-wrap;
+              word-break: break-word;
+              font-family: "Courier New", monospace;
+            }
+            .qr-inline {
+              float: right;
+              width: 220px;
+              height: 220px;
+              margin: 4px 115px 8px 0;
+              background: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              border: none;
+            }
+            .qr-inline img {
+              display: block;
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .journal-footer {
+              clear: right;
+              margin-top: 0;
+            }
+            @media print {
+              body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page">
+            <div class="header-row">
+              <span>${new Date(sale.created_at).toLocaleDateString('en-CA')}</span>
+                <span>${escapeHtml(String(invoiceNumber))}</span>
+            </div>
+
+            <div class="journal-flow">
+              ${journalBefore ? `<pre>${escapeHtml(journalBefore)}</pre>` : ''}
+
+              ${verificationQr ? `
+                <div class="qr-inline">
+                  <img data-qr="true" src="data:image/gif;base64,${verificationQr}" alt="Verification QR code" />
+                </div>
+              ` : ''}
+
+              ${journalFooter ? `<pre class="journal-footer">${escapeHtml(journalFooter)}</pre>` : ''}
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Invoice Print</title>
+        <style>
+          body { margin: 0; font-family: Arial, sans-serif; background: #fff; color: #111; }
+          .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 12mm; box-sizing: border-box; }
+          .header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 14px; }
+          .layout { display: grid; grid-template-columns: 1.2fr 220px; gap: 18px; align-items: start; }
+          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 12px; }
+          .section { border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; margin-top: 12px; padding: 6px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+          th, td { border-bottom: 1px solid #d1d5db; padding: 6px 4px; text-align: left; }
+          .totals { margin-top: 18px; display: grid; grid-template-columns: 1fr auto; gap: 8px 18px; font-size: 12px; }
+          .qr-box { width: 180px; height: 180px; border: 1px solid #111; margin: 0 auto; overflow: hidden; }
+          .qr-box img { display: block; width: 100%; height: 100%; }
+          @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+        </style>
+      </head>
+      <body>
+        <div class="page">
+          <div class="header">
+            <span>${new Date(sale.created_at).toLocaleString()}</span>
+            <strong>${escapeHtml(String(invoiceNumber))}</strong>
+          </div>
+
+          <div class="layout">
+            <div>
+              <div class="info">
+                <div><strong>TIN:</strong> ${escapeHtml(String(payload?.taxId ?? ''))}</div>
+                <div><strong>Invoice No:</strong> ${escapeHtml(String(invoiceNumber))}</div>
+                <div><strong>Vendor:</strong> ${escapeHtml(vendor)}</div>
+                <div><strong>Invoice is verified</strong></div>
+                <div><strong>Store:</strong> ${escapeHtml(storeName)}</div>
+                <div><strong>Status:</strong> ${escapeHtml(sale.status)}</div>
+                <div><strong>Address:</strong> ${escapeHtml(address)}</div>
+                <div><strong>Buyer:</strong> ${escapeHtml(buyer)}</div>
+              </div>
+
+              <div class="section">Items</div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows}
+                </tbody>
+              </table>
+
+              <div class="totals">
+                <div><strong>Total Purchase:</strong></div>
+                <div>${Number(total).toFixed(2)}</div>
+                <div><strong>Total Tax:</strong></div>
+                <div>${Number(tax).toFixed(2)}</div>
+                <div><strong>Payment Method:</strong></div>
+                <div>Cash</div>
+                <div><strong>Invoice Type:</strong></div>
+                <div>Proforma Sale</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="qr-box">
+                <img data-qr="true" src="${qrImageUrl}" alt="Invoice QR" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+}
 
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams()
@@ -38,7 +267,20 @@ export function InvoiceDetailPage() {
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false)
   const [connectorToken, setConnectorToken] = useState('')
   const [connectorTokenError, setConnectorTokenError] = useState('')
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false)
+  const [printType, setPrintType] = useState<PrintMode>('invoice')
   const sale = data?.data
+
+  const handleOpenPrintDialog = (type: PrintMode) => {
+    setPrintType(type)
+    setIsPrintDialogOpen(true)
+  }
+
+  const handlePrintConfirm = () => {
+    if (!sale) return
+    printSale(sale, (currentSale) => buildPrintableHtml(currentSale, printType))
+    setIsPrintDialogOpen(false)
+  }
 
   const handleCompleteSaleClick = () => {
     if (!sale) return
@@ -64,7 +306,7 @@ export function InvoiceDetailPage() {
 
   const actions = getInvoiceActions(sale?.payload?.invoiceType, {
     print: () => {
-      console.log('Print invoice', sale?.id)
+      handleOpenPrintDialog('invoice')
     },
     completeSale: () => {
       if (isCompletingSale) return
@@ -189,6 +431,54 @@ export function InvoiceDetailPage() {
             </Button>
             <Button type="button" onClick={() => void handleConfirmCompleteSale()} disabled={isCompletingSale}>
               {isCompletingSale ? 'Sending...' : 'Confirm sale'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isPrintDialogOpen}
+        onOpenChange={(open) => {
+          setIsPrintDialogOpen(open)
+          if (!open) {
+            setPrintType('invoice')
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select print type</DialogTitle>
+            <DialogDescription>Choose the format you want to print.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <label className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="printType"
+                checked={printType === 'slip'}
+                onChange={() => setPrintType('slip')}
+              />
+              <span>Print as slip</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="printType"
+                checked={printType === 'invoice'}
+                onChange={() => setPrintType('invoice')}
+              />
+              <span>Print as invoice</span>
+            </label>
+          </div>
+
+          <DialogFooter className="sm:justify-end">
+            <Button variant="outline" type="button" onClick={() => setIsPrintDialogOpen(false)}>
+              Close
+            </Button>
+            <Button type="button" onClick={handlePrintConfirm}>
+              Print
             </Button>
           </DialogFooter>
         </DialogContent>

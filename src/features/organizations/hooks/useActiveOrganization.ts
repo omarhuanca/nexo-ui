@@ -35,21 +35,21 @@ export function useActiveOrganization(): {
   setOrganizationId: (id: number) => void
 } {
   const [rawOrgId, setOrgId] = useQueryState('org', parseAsInteger)
-  const organizationId = rawOrgId ?? ORGANIZATION_NONE
+  const storedOrgId = readStoredOrg()
+  const organizationId = rawOrgId ?? storedOrgId
   const seededRef = useRef(false)
 
   useEffect(() => {
     if (seededRef.current) return
     seededRef.current = true
-    if (organizationId !== ORGANIZATION_NONE) {
-      writeStoredOrg(organizationId)
+
+    if (rawOrgId == null && storedOrgId !== ORGANIZATION_NONE) {
+      setOrgId(storedOrgId)
       return
     }
-    const stored = readStoredOrg()
-    if (stored !== ORGANIZATION_NONE) {
-      setOrgId(stored)
-    }
-  }, [organizationId, setOrgId])
+
+    writeStoredOrg(organizationId)
+  }, [organizationId, rawOrgId, setOrgId, storedOrgId])
 
   useEffect(() => {
     if (!seededRef.current) return
