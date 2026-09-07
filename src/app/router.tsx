@@ -23,6 +23,18 @@ const AuditLogsPage = lazy(() =>
   ),
 )
 
+const ProductsPage = lazy(() =>
+  import('@/features/products/pages/ProductsPage').then((m) => ({
+    default: m.ProductsPage,
+  })),
+)
+
+const CreateProductPage = lazy(() =>
+  import('@/features/products/pages/CreateProductPage').then((m) => ({
+    default: m.CreateProductPage,
+  })),
+)
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -50,6 +62,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingState />}>
             <AuditLogsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'products',
+        element: (
+          <Suspense fallback={<LoadingState />}>
+            <ProductsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'products/new',
+        element: (
+          <Suspense fallback={<LoadingState />}>
+            <CreateProductPage />
           </Suspense>
         ),
       },
