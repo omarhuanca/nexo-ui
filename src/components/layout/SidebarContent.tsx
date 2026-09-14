@@ -7,6 +7,7 @@ export function SidebarContent() {
   return (
     <nav className={cn('p-4', isCollapsed && 'lg:p-2')}>
       <SidebarItem label="Sales" to="/invoices" groupLabel="Sales" defaultOpen />
+      <SidebarItem label="Products" to="/products" groupLabel="Catalog" defaultOpen />
       <SidebarItem label="Audit logs" to="/audit-logs" groupLabel="Audit" defaultOpen />
     </nav>
   )
