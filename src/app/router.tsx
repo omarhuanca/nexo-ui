@@ -35,6 +35,12 @@ const CreateProductPage = lazy(() =>
   })),
 )
 
+const IntegrationsPage = lazy(() =>
+  import('@/features/integrations/pages/IntegrationsPage').then((m) => ({
+    default: m.IntegrationsPage,
+  })),
+)
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -78,6 +84,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingState />}>
             <CreateProductPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'settings/integrations',
+        element: (
+          <Suspense fallback={<LoadingState />}>
+            <IntegrationsPage />
           </Suspense>
         ),
       },

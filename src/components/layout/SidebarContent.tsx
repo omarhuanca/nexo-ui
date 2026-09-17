@@ -1,3 +1,4 @@
+import { Plug } from 'lucide-react'
 import { SidebarItem } from './SidebarItem'
 import { useSidebar } from '@/hooks/useSidebar'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,13 @@ export function SidebarContent() {
       <SidebarItem label="Sales" to="/invoices" groupLabel="Sales" defaultOpen />
       <SidebarItem label="Products" to="/products" groupLabel="Catalog" defaultOpen />
       <SidebarItem label="Audit logs" to="/audit-logs" groupLabel="Audit" defaultOpen />
+      <SidebarItem
+        label="Integrations"
+        to="/settings/integrations"
+        groupLabel="Settings"
+        icon={Plug}
+        defaultOpen
+      />
     </nav>
   )
 }
