@@ -8,7 +8,10 @@ export const saleSchema = z.object({
     .array(
       z.object({
         productCode: z.string().min(1, 'Product is required'),
-        quantity: z.number().min(0.001, 'Quantity must be greater than zero'),
+        quantity: z
+          .number()
+          .int('Quantity must be a whole number')
+          .min(1, 'Quantity must be at least 1'),
       }),
     )
     .min(1, 'Add at least one product'),
