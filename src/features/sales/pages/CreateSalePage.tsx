@@ -120,7 +120,7 @@ function SaleForm({ products, isLoading }: { products: Product[]; isLoading: boo
                 </select>
               </Field>
               <Field label="Quantity" error={errors.items?.[index]?.quantity?.message}>
-                <Input type="number" min="0.001" step="0.001" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
+                <Input type="number" min="1" step="1" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
               </Field>
               <Button type="button" variant="ghost" size="icon" aria-label={`Remove product ${index + 1}`} onClick={() => remove(index)} disabled={fields.length === 1}>
                 <Trash2 aria-hidden="true" />
