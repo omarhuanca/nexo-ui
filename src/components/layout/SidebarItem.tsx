@@ -11,18 +11,32 @@ import { cn } from '@/lib/utils'
 import { useSidebar } from '@/hooks/useSidebar'
 
 interface SidebarItemProps {
-  label: string
-  to: string
+  label?: string
+  to?: string
+  items?: SidebarLink[]
   groupLabel?: string
   defaultOpen?: boolean
 }
 
-function SidebarItemComponent({ label, to, groupLabel = 'Sales', defaultOpen = true }: SidebarItemProps) {
-  const { isCollapsed } = useSidebar()
+interface SidebarLink {
+  label: string
+  to: string
+}
 
-  const item = (
+function SidebarItemComponent({
+  label,
+  to,
+  items,
+  groupLabel = 'Sales',
+  defaultOpen = true,
+}: SidebarItemProps) {
+  const { isCollapsed } = useSidebar()
+  const links = items ?? (label && to ? [{ label, to }] : [])
+
+  const renderLink = ({ label: linkLabel, to: linkTo }: SidebarLink) => (
     <NavLink
-      to={to}
+      key={linkTo}
+      to={linkTo}
       end
       className={({ isActive }) =>
         cn(
@@ -43,7 +57,7 @@ function SidebarItemComponent({ label, to, groupLabel = 'Sales', defaultOpen = t
             )}
             aria-hidden="true"
           />
-          <span className={cn(isCollapsed && 'lg:hidden')}>{label}</span>
+          <span className={cn(isCollapsed && 'lg:hidden')}>{linkLabel}</span>
         </>
       )}
     </NavLink>
@@ -52,12 +66,14 @@ function SidebarItemComponent({ label, to, groupLabel = 'Sales', defaultOpen = t
   if (isCollapsed) {
     return (
       <ul className="space-y-0.5">
-        <li>
-          <Tooltip>
-            <TooltipTrigger asChild>{item}</TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
-          </Tooltip>
-        </li>
+        {links.map((link) => (
+          <li key={link.to}>
+            <Tooltip>
+              <TooltipTrigger asChild>{renderLink(link)}</TooltipTrigger>
+              <TooltipContent side="right">{link.label}</TooltipContent>
+            </Tooltip>
+          </li>
+        ))}
       </ul>
     )
   }
@@ -89,7 +105,7 @@ function SidebarItemComponent({ label, to, groupLabel = 'Sales', defaultOpen = t
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden">
         <ul className="mt-1 space-y-0.5 pl-2">
-          <li>{item}</li>
+          {links.map((link) => <li key={link.to}>{renderLink(link)}</li>)}
         </ul>
       </CollapsibleContent>
     </Collapsible>

@@ -8,6 +8,9 @@ export interface Product {
   description: string
   salePrice: number
   costPrice: number
+  xeroConfigured: boolean
+  salesAccountCode: string
+  purchaseAccountCode: string
   created_at: string
   updated_at: string
 }
