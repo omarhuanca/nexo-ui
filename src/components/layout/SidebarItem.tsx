@@ -11,25 +11,34 @@ import { cn } from '@/lib/utils'
 import { useSidebar } from '@/hooks/useSidebar'
 
 interface SidebarItemProps {
-  label: string
-  to: string
+  label?: string
+  to?: string
+  items?: SidebarLink[]
   groupLabel?: string
   defaultOpen?: boolean
   icon?: LucideIcon
 }
 
+interface SidebarLink {
+  label: string
+  to: string
+}
+
 function SidebarItemComponent({
   label,
   to,
+  items,
   groupLabel = 'Sales',
   defaultOpen = true,
   icon: Icon = FileText,
 }: SidebarItemProps) {
   const { isCollapsed } = useSidebar()
+  const links = items ?? (label && to ? [{ label, to }] : [])
 
-  const item = (
+  const renderLink = ({ label: linkLabel, to: linkTo }: SidebarLink) => (
     <NavLink
-      to={to}
+      key={linkTo}
+      to={linkTo}
       end
       className={({ isActive }) =>
         cn(
@@ -50,7 +59,7 @@ function SidebarItemComponent({
             )}
             aria-hidden="true"
           />
-          <span className={cn(isCollapsed && 'lg:hidden')}>{label}</span>
+          <span className={cn(isCollapsed && 'lg:hidden')}>{linkLabel}</span>
         </>
       )}
     </NavLink>
@@ -59,12 +68,14 @@ function SidebarItemComponent({
   if (isCollapsed) {
     return (
       <ul className="space-y-0.5">
-        <li>
-          <Tooltip>
-            <TooltipTrigger asChild>{item}</TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
-          </Tooltip>
-        </li>
+        {links.map((link) => (
+          <li key={link.to}>
+            <Tooltip>
+              <TooltipTrigger asChild>{renderLink(link)}</TooltipTrigger>
+              <TooltipContent side="right">{link.label}</TooltipContent>
+            </Tooltip>
+          </li>
+        ))}
       </ul>
     )
   }
@@ -96,7 +107,7 @@ function SidebarItemComponent({
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden">
         <ul className="mt-1 space-y-0.5 pl-2">
-          <li>{item}</li>
+          {links.map((link) => <li key={link.to}>{renderLink(link)}</li>)}
         </ul>
       </CollapsibleContent>
     </Collapsible>

@@ -35,6 +35,12 @@ const CreateProductPage = lazy(() =>
   })),
 )
 
+const CreateSalePage = lazy(() =>
+  import('@/features/sales/pages/CreateSalePage').then((m) => ({
+    default: m.CreateSalePage,
+  })),
+)
+
 const IntegrationsPage = lazy(() =>
   import('@/features/integrations/pages/IntegrationsPage').then((m) => ({
     default: m.IntegrationsPage,
@@ -60,6 +66,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingState />}>
             <InvoiceDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'sales/new',
+        element: (
+          <Suspense fallback={<LoadingState />}>
+            <CreateSalePage />
           </Suspense>
         ),
       },
