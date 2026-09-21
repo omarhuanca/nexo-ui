@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
-import { FileText } from 'lucide-react'
+import { FileText, type LucideIcon } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,6 +16,7 @@ interface SidebarItemProps {
   items?: SidebarLink[]
   groupLabel?: string
   defaultOpen?: boolean
+  icon?: LucideIcon
 }
 
 interface SidebarLink {
@@ -29,6 +30,7 @@ function SidebarItemComponent({
   items,
   groupLabel = 'Sales',
   defaultOpen = true,
+  icon: Icon = FileText,
 }: SidebarItemProps) {
   const { isCollapsed } = useSidebar()
   const links = items ?? (label && to ? [{ label, to }] : [])
@@ -50,7 +52,7 @@ function SidebarItemComponent({
     >
       {({ isActive }) => (
         <>
-          <FileText
+          <Icon
             className={cn(
               'h-4 w-4 shrink-0',
               isActive ? 'text-blue-700' : 'text-slate-400',
