@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CheckCircle2, ExternalLink, Plug, XCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,9 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { buildXeroConnectUrl } from '../api/xero'
+import { useDisconnectXeroConnection } from '../api/useDisconnectXeroConnection'
 import { useXeroConnectionStatus } from '../api/useXeroConnectionStatus'
+import { useXeroOauthConnect } from '../hooks/useXeroOauthConnect'
 
 interface XeroConnectionCardProps {
   organizationId: number
@@ -19,9 +29,13 @@ interface XeroConnectionCardProps {
 export function XeroConnectionCard({ organizationId }: XeroConnectionCardProps) {
   const { data, isLoading } = useXeroConnectionStatus(organizationId)
   const status = data?.data
+  const { connect, isConnecting } = useXeroOauthConnect(organizationId)
+  const disconnectMutation = useDisconnectXeroConnection(organizationId)
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false)
 
-  const handleConnect = () => {
-    window.location.href = buildXeroConnectUrl(organizationId)
+  const handleDisconnect = async () => {
+    await disconnectMutation.mutateAsync()
+    setIsDisconnectDialogOpen(false)
   }
 
   return (
@@ -57,12 +71,54 @@ export function XeroConnectionCard({ organizationId }: XeroConnectionCardProps) 
           </Badge>
         )}
       </CardHeader>
-      <CardContent>
-        <Button size="sm" onClick={handleConnect}>
-          {status?.connected ? 'Reconnect to Xero' : 'Connect to Xero'}
+      <CardContent className="flex items-center gap-2">
+        <Button size="sm" onClick={connect} disabled={isConnecting}>
+          {isConnecting
+            ? 'Connecting...'
+            : status?.connected
+              ? 'Reconnect to Xero'
+              : 'Connect to Xero'}
           <ExternalLink aria-hidden="true" />
         </Button>
+        {status?.connected && (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setIsDisconnectDialogOpen(true)}
+          >
+            Disconnect
+          </Button>
+        )}
       </CardContent>
+
+      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect from Xero?</DialogTitle>
+            <DialogDescription>
+              Invoice syncing with {status?.tenant_name ?? 'this Xero account'} will
+              stop. You can reconnect at any time.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setIsDisconnectDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={disconnectMutation.isPending}
+              onClick={() => void handleDisconnect()}
+            >
+              {disconnectMutation.isPending ? 'Disconnecting...' : 'Disconnect'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
